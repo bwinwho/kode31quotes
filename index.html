@@ -1,22 +1,36 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0f" />
-    <meta name="description" content="Kode31 Quote Studio — generate premium client quotations in minutes." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap"
-      rel="stylesheet"
-    />
-    <title>Kode31 Quote Studio</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Kode31 Quote Studio — generate premium client quotations in minutes." />
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+  <title>Kode31 Quote Studio</title>
+
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/typography.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="dialog-root"></div>
+  <div id="sheet-root"></div>
+  <div id="toast-root" class="toast-stack"></div>
+
+  <!-- Firebase (compat build, vendored locally — no CDN dependency) -->
+  <script src="assets/vendor/firebase/firebase-app-compat.js"></script>
+  <script src="assets/vendor/firebase/firebase-auth-compat.js"></script>
+  <script src="assets/vendor/firebase/firebase-firestore-compat.js"></script>
+  <script src="assets/vendor/firebase/firebase-storage-compat.js"></script>
+
+  <!-- jsPDF (vendored locally) -->
+  <script src="assets/vendor/jspdf/jspdf.umd.min.js"></script>
+
+  <script type="module" src="js/app.js"></script>
+</body>
 </html>

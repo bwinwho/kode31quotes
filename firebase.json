@@ -1,7 +1,7 @@
 {
   "hosting": {
-    "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "public": ".",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "*.md"],
     "rewrites": [
       {
         "source": "**",
@@ -12,10 +12,6 @@
       {
         "source": "**/*.@(js|css|svg|png|jpg|jpeg|webp|woff2)",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-      },
-      {
-        "source": "/sw.js",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
       }
     ]
   },
@@ -30,6 +26,7 @@
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },
     "storage": { "port": 9199 },
+    "hosting": { "port": 5000 },
     "ui": { "enabled": true, "port": 4000 },
     "singleProject": true
   }
