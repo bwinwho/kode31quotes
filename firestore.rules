@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Every authenticated team member can read the catalog & settings.
+    // Only admins can change pricing/catalog/company settings.
+    match /divisions/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /categories/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /businessTypes/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /services/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /settings/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Any signed-in team member can create quotes and read all quotes (shared pipeline visibility).
+    // Only the creator or an admin can update/delete a quote.
+    match /quotes/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy.uid == request.auth.uid;
+      allow update, delete: if signedIn() &&
+        (resource.data.createdBy.uid == request.auth.uid || isAdmin());
+    }
+
+    // Users can read their own profile and the team roster; only admins manage roles.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && (request.auth.uid == uid || isAdmin()) &&
+        (isAdmin() || request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+  }
+}
