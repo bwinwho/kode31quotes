@@ -1,0 +1,130 @@
+/* ==========================================================================
+   Design tokens — change a value here and it updates the entire application.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+
+:root {
+  /* ---- Color: surfaces ---- */
+  --color-bg: #050505;
+  --color-surface: #101010;
+  --color-card: #161616;
+  --color-card-hover: #1c1c1c;
+  --color-border: #262626;
+  --color-border-strong: #333333;
+
+  /* ---- Color: text ---- */
+  --color-text: #ffffff;
+  --color-text-secondary: #8a8a8a;
+  --color-text-tertiary: #5c5c5c;
+  --color-accent: #ffffff;
+  --color-accent-text: #050505;
+
+  /* ---- Color: subtle status accents (used sparingly — badges, toasts) ---- */
+  --color-success: #4ade80;
+  --color-success-bg: rgba(74, 222, 128, 0.1);
+  --color-success-border: rgba(74, 222, 128, 0.25);
+  --color-warning: #fbbf24;
+  --color-warning-bg: rgba(251, 191, 36, 0.1);
+  --color-warning-border: rgba(251, 191, 36, 0.25);
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(248, 113, 113, 0.1);
+  --color-danger-border: rgba(248, 113, 113, 0.25);
+  --color-info: #60a5fa;
+  --color-info-bg: rgba(96, 165, 250, 0.1);
+  --color-info-border: rgba(96, 165, 250, 0.25);
+
+  /* ---- Typography ---- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --text-xs: 0.75rem;    /* 12px — captions */
+  --text-sm: 0.8125rem;  /* 13px — secondary body */
+  --text-base: 0.9375rem;/* 15px — body */
+  --text-md: 1.0625rem;  /* 17px — emphasized body */
+  --text-lg: 1.25rem;    /* 20px — section heading */
+  --text-xl: 1.625rem;   /* 26px — page heading */
+  --text-2xl: 2.125rem;  /* 34px — large heading */
+  --text-3xl: 2.75rem;   /* 44px — hero */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.06em;
+
+  /* ---- Spacing scale ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* ---- Radius ---- */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  /* ---- Shadows (soft, dark-native) ---- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 64px -16px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 20px 48px -16px rgba(0, 0, 0, 0.7);
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 380ms;
+
+  /* ---- Layout ---- */
+  --nav-width: 264px;
+  --nav-height: 64px;
+  --content-max: 960px;
+  --z-nav: 100;
+  --z-sheet: 200;
+  --z-dialog: 300;
+  --z-toast: 400;
+}

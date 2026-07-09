@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.animate-fade-in {
+  animation: fade-in var(--duration-base) var(--ease) both;
+}
+
+.animate-fade-up {
+  animation: fade-up var(--duration-slow) var(--ease) both;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-base) var(--ease) both;
+}
+
+.overlay {
+  animation: fade-in var(--duration-base) var(--ease) both;
+}
+
+.dialog {
+  animation: scale-in var(--duration-base) var(--ease) both;
+}
+
+.sheet {
+  animation: sheet-up var(--duration-base) var(--ease) both;
+}
+
+.toast {
+  animation: toast-in var(--duration-base) var(--ease) both;
+}
+
+.stagger > * {
+  animation: fade-up var(--duration-slow) var(--ease) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(n+7) { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

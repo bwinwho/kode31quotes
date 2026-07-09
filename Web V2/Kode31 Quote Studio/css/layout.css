@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Reset & base layout
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ---- App shell ---- */
+
+#app {
+  min-height: 100dvh;
+  display: flex;
+}
+
+.app-sidenav {
+  display: none;
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--nav-width);
+  flex-direction: column;
+  padding: var(--space-5) var(--space-4);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  z-index: var(--z-nav);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 100dvh;
+}
+
+.app-content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) calc(var(--nav-height) + var(--space-8));
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) var(--space-4) var(--space-4);
+  background: rgba(5, 5, 5, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid transparent;
+}
+
+.app-topbar.is-scrolled {
+  border-bottom-color: var(--color-border);
+}
+
+.app-bottomnav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-nav);
+  display: flex;
+  justify-content: space-around;
+  padding: var(--space-2) var(--space-2) calc(env(safe-area-inset-bottom) + var(--space-2));
+  background: rgba(16, 16, 16, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---- Grid helpers ---- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.grid-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---- Breakpoints ---- */
+
+@media (min-width: 640px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 860px) {
+  .app-sidenav {
+    display: flex;
+  }
+
+  .app-main {
+    margin-left: var(--nav-width);
+  }
+
+  .app-bottomnav {
+    display: none;
+  }
+
+  .app-topbar {
+    padding: var(--space-6) var(--space-8) var(--space-5);
+  }
+
+  .app-content {
+    padding: 0 var(--space-8) var(--space-9);
+  }
+
+  .grid-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .app-content {
+    padding-left: var(--space-9);
+    padding-right: var(--space-9);
+  }
+}
