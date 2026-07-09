@@ -37,35 +37,35 @@
 }
 
 .animate-fade-in {
-  animation: fade-in var(--duration-base) var(--ease) both;
+  animation: fade-in var(--duration-base) var(--ease) backwards;
 }
 
 .animate-fade-up {
-  animation: fade-up var(--duration-slow) var(--ease) both;
+  animation: fade-up var(--duration-slow) var(--ease) backwards;
 }
 
 .animate-scale-in {
-  animation: scale-in var(--duration-base) var(--ease) both;
+  animation: scale-in var(--duration-base) var(--ease) backwards;
 }
 
 .overlay {
-  animation: fade-in var(--duration-base) var(--ease) both;
+  animation: fade-in var(--duration-base) var(--ease) backwards;
 }
 
 .dialog {
-  animation: scale-in var(--duration-base) var(--ease) both;
+  animation: scale-in var(--duration-base) var(--ease) backwards;
 }
 
 .sheet {
-  animation: sheet-up var(--duration-base) var(--ease) both;
+  animation: sheet-up var(--duration-base) var(--ease) backwards;
 }
 
 .toast {
-  animation: toast-in var(--duration-base) var(--ease) both;
+  animation: toast-in var(--duration-base) var(--ease) backwards;
 }
 
 .stagger > * {
-  animation: fade-up var(--duration-slow) var(--ease) both;
+  animation: fade-up var(--duration-slow) var(--ease) backwards;
 }
 
 .stagger > *:nth-child(1) { animation-delay: 0ms; }

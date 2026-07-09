@@ -440,13 +440,17 @@ function buildQtyStepper(value, onChange) {
 export function renderQuoteBar(navigate) {
   if (draft.items.length === 0) return null;
   const total = computeGrandTotal();
-  return el('div', { class: 'quote-bar animate-fade-up' }, [
-    el('div', { class: 'quote-bar-inner' }, [
-      el('div', {}, [
-        el('p', { class: 'text-caption' }, `${draft.items.length} service${draft.items.length > 1 ? 's' : ''} selected`),
-        el('p', { class: 'text-price', style: { fontSize: '18px' } }, formatINR(total)),
+  return el('div', {}, [
+    // Occupies real layout space so the page can scroll its last items clear of the fixed bar below.
+    el('div', { class: 'quote-bar-spacer' }),
+    el('div', { class: 'quote-bar animate-fade-up' }, [
+      el('div', { class: 'quote-bar-inner' }, [
+        el('div', {}, [
+          el('p', { class: 'text-caption' }, `${draft.items.length} service${draft.items.length > 1 ? 's' : ''} selected`),
+          el('p', { class: 'text-price', style: { fontSize: '18px' } }, formatINR(total)),
+        ]),
+        button({ label: 'Review Quote', icon: 'arrowRight', onClick: () => navigate('/quote') }),
       ]),
-      button({ label: 'Review Quote', icon: 'arrowRight', onClick: () => navigate('/quote') }),
     ]),
   ]);
 }
