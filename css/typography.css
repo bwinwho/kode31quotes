@@ -57,7 +57,7 @@ body {
 }
 
 .heading-page {
-  font-size: var(--text-xl);
+  font-size: clamp(1.35rem, 5vw, 1.625rem);
   font-weight: var(--weight-bold);
   letter-spacing: -0.03em;
   line-height: var(--leading-tight);

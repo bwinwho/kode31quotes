@@ -10,8 +10,7 @@ const STATUSES = ['Draft', 'Sent', 'Signed', 'Accepted', 'Rejected'];
 
 export function renderDashboardView(navigate) {
   const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(el('h1', { class: 'heading-page' }, 'Dashboard'));
-  wrapper.appendChild(el('p', { class: 'text-secondary text-caption', style: { marginTop: '4px', marginBottom: '20px' } }, 'Every quotation, live'));
+  wrapper.appendChild(el('div', { class: 'page-title' }, [el('h1', { class: 'heading-page' }, 'Dashboard'), el('p', { class: 'page-title-sub' }, 'Every quotation, live')]));
 
   const statGrid = el('div', { class: 'stat-grid section' });
   wrapper.appendChild(statGrid);
@@ -159,12 +158,10 @@ export function renderQuoteDetailView(navigate, id) {
     let updating = false;
     let downloading = false;
 
+    // Minimal header — the bill below already carries the quote number, division and date.
     const headerRow = el('div', { class: 'row', style: { gap: '12px', marginBottom: '20px' } }, [
       iconButton({ iconName: 'arrowLeft', variant: 'secondary', onClick: () => navigate(-1), ariaLabel: 'Back' }),
-      el('div', { style: { flex: 1 } }, [
-        el('h1', { class: 'heading-page' }, quote.quoteNumber),
-        el('p', { class: 'text-secondary text-caption' }, `${quote.divisionName} · ${formatDate(quote.createdAt)}`),
-      ]),
+      el('span', { style: { flex: 1 } }),
       statusBadge(quote.status),
     ]);
     wrapper.appendChild(headerRow);
@@ -252,9 +249,8 @@ export function renderQuoteDetailView(navigate, id) {
 
 export function renderSignedCustomersView(navigate) {
   const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(el('h1', { class: 'heading-page' }, 'Signed Customers'));
-  const sub = el('p', { class: 'text-secondary text-caption', style: { marginTop: '4px', marginBottom: '20px' } }, '');
-  wrapper.appendChild(sub);
+  const sub = el('p', { class: 'page-title-sub' }, '');
+  wrapper.appendChild(el('div', { class: 'page-title' }, [el('h1', { class: 'heading-page' }, 'Signed Customers'), sub]));
 
   const listRoot = el('div', {}, [spinner(true)]);
   wrapper.appendChild(listRoot);

@@ -63,6 +63,43 @@
   margin-bottom: var(--space-5);
 }
 
+/* ---- Shared page header (back + title + optional action) ---- */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.page-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header-sub {
+  font-size: var(--text-xs);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-header-action {
+  flex-shrink: 0;
+}
+
+/* Headerless page titles (Dashboard / Admin / Signed) use the same rhythm. */
+.page-title {
+  margin-bottom: var(--space-6);
+}
+
+.page-title-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
 /* ---- Home ("Time to Quote") ---- */
 
 .home-view {
@@ -677,38 +714,45 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-5);
+  padding: clamp(var(--space-4), 4.5vw, var(--space-5));
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   background: #0a0a0c;
   background-image: var(--sheen-card);
+  overflow: hidden; /* never let a wide child spill and shift the layout */
 }
 
 .bill-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4);
 }
 
 .bill-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-1) var(--space-4);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
 
+.bill-brand {
+  min-width: 0;
+}
+
 .bill-logo {
-  font-size: 1.75rem;
+  font-size: clamp(1.375rem, 6.5vw, 1.7rem);
   font-weight: var(--weight-black);
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .bill-logo-img {
-  height: 40px;
+  height: 38px;
+  max-width: 100%;
   width: auto;
   object-fit: contain;
 }
@@ -721,7 +765,8 @@
 
 .bill-metablock {
   text-align: right;
-  flex-shrink: 0;
+  min-width: 0;
+  margin-left: auto;
 }
 
 .bill-meta-label {
@@ -732,7 +777,7 @@
 }
 
 .bill-number {
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
   margin-top: 3px;
@@ -754,16 +799,24 @@
   gap: var(--space-3);
 }
 
+.bill-party {
+  padding: var(--space-4) var(--space-3);
+}
+
 .bill-eyebrow {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
   margin-bottom: var(--space-3);
+}
+
+.bill-eyebrow svg {
+  flex-shrink: 0;
 }
 
 .bill-party.is-right {
@@ -798,14 +851,18 @@
 }
 
 .bill-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
+  padding: var(--space-4) 0;
 }
 
 .bill-item + .bill-item {
   border-top: 1px solid var(--color-border);
+}
+
+/* Name + price share one full-width row; details flow full-width beneath. */
+.bill-item-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .bill-item-icon {
@@ -820,41 +877,13 @@
   flex-shrink: 0;
 }
 
-.bill-item-body {
+.bill-item-name {
   flex: 1;
   min-width: 0;
-}
-
-.bill-item-name {
   font-size: var(--text-md);
   font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
-}
-
-.bill-item-meta {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  margin-top: 3px;
-}
-
-.bill-chips {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 7px 11px;
-  margin-top: 9px;
-  line-height: 1.5;
-}
-
-.bill-subline {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  margin-top: 6px;
+  line-height: 1.25;
 }
 
 .bill-item-price {
@@ -864,6 +893,36 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.bill-item-detail {
+  padding-left: calc(38px + var(--space-3)); /* align under the name, past the icon */
+  margin-top: var(--space-2);
+}
+
+.bill-item-meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.bill-chips {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: var(--space-3);
+  line-height: 1.55;
+}
+
+.bill-subline {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: 6px;
 }
 
 .bill-totals {

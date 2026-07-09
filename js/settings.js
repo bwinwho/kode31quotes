@@ -80,8 +80,7 @@ async function updateUserRole(uidVal, role) {
 
 export function renderAdminView() {
   const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(el('h1', { class: 'heading-page' }, 'Admin Settings'));
-  wrapper.appendChild(el('p', { class: 'text-secondary text-caption', style: { marginTop: '4px', marginBottom: '20px' } }, 'Everything here is editable without touching code'));
+  wrapper.appendChild(el('div', { class: 'page-title' }, [el('h1', { class: 'heading-page' }, 'Admin Settings'), el('p', { class: 'page-title-sub' }, 'Everything here is editable without touching code')]));
 
   let tab = 'catalog';
   const body = el('div');

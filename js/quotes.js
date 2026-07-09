@@ -548,13 +548,13 @@ export function flowTop(onBack, step, total) {
 }
 
 export function pageHeader(title, subtitle, onBack, action) {
-  return el('div', { class: 'row', style: { gap: '12px', marginBottom: '20px' } }, [
+  return el('div', { class: 'page-header' }, [
     onBack ? iconButton({ iconName: 'arrowLeft', variant: 'secondary', onClick: onBack, ariaLabel: 'Back' }) : null,
-    el('div', { style: { minWidth: 0, flex: 1 } }, [
+    el('div', { class: 'page-header-text' }, [
       el('h1', { class: 'heading-page' }, title),
-      subtitle ? el('p', { class: 'text-secondary text-caption', style: { marginTop: '4px' } }, subtitle) : null,
+      subtitle ? el('p', { class: 'page-header-sub text-secondary' }, subtitle) : null,
     ]),
-    action || null,
+    action ? el('div', { class: 'page-header-action' }, [action]) : null,
   ]);
 }
 
@@ -614,15 +614,17 @@ export function renderBill(quote, company) {
       el('div', { class: 'bill-services-head' }, [el('span', {}, 'SERVICE & DETAILS'), el('span', {}, 'PRICE')]),
       ...quote.items.map((item) =>
         el('div', { class: 'bill-item' }, [
-          el('div', { class: 'bill-item-icon' }, [icon(deriveServiceIcon(item, item.categoryName), 18)]),
-          el('div', { class: 'bill-item-body' }, [
+          el('div', { class: 'bill-item-top' }, [
+            el('div', { class: 'bill-item-icon' }, [icon(deriveServiceIcon(item, item.categoryName), 18)]),
             el('p', { class: 'bill-item-name' }, [item.name, item.quantity > 1 ? el('span', { class: 'text-secondary' }, `  × ${item.quantity}`) : null]),
+            el('p', { class: 'bill-item-price' }, formatINR(item.lineTotal)),
+          ]),
+          el('div', { class: 'bill-item-detail' }, [
             el('p', { class: 'bill-item-meta' }, [item.categoryName, item.businessTypeName, item.deliveryTime ? `Delivery: ${item.deliveryTime}` : null].filter(Boolean).join('  ·  ')),
             item.includes?.length ? el('div', { class: 'bill-chips' }, item.includes.join('   ·   ')) : null,
             ...(item.selectedUpgrades || []).map((u) => el('p', { class: 'bill-subline' }, [el('span', {}, `+ ${u.name}`), el('span', {}, formatINR(u.price))])),
             ...(item.annualCharges || []).filter((c) => c.included).map((c) => el('p', { class: 'bill-subline' }, [el('span', {}, `Annual · ${c.name}`), el('span', {}, `${formatINR(c.price)}/yr`)])),
           ]),
-          el('p', { class: 'bill-item-price' }, formatINR(item.lineTotal)),
         ]),
       ),
       el('div', { class: 'bill-totals' }, [
@@ -695,7 +697,7 @@ export function renderQuoteReviewView(navigate) {
       'Review Quote',
       `${draft.division.name} · ${draft.customer.name}`,
       () => navigate(-1),
-      button({ label: 'Add More', icon: 'plus', size: 'sm', variant: 'secondary', onClick: () => navigate(draft.division.id === 'universe' ? '/universe' : '/multiverse') }),
+      iconButton({ iconName: 'plus', variant: 'secondary', ariaLabel: 'Add more services', onClick: () => navigate(draft.division.id === 'universe' ? '/universe' : '/multiverse') }),
     ),
   );
 
