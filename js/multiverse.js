@@ -4,8 +4,8 @@
 // can buy individual pieces instead of a full system.
 
 import { db, COLLECTIONS } from './firebase.js';
-import { el, card, tileIcon, emptyState, spinner } from './ui.js';
-import { getDraft, setCategoryPath, renderServiceCard, renderQuoteBar, pageHeader } from './quotes.js';
+import { el, glowIcon, icon, emptyState, spinner } from './ui.js';
+import { getDraft, setCategoryPath, renderServiceCard, renderQuoteBar, pageHeader, flowBack } from './quotes.js';
 
 export const MULTIVERSE_DIVISION = {
   id: 'multiverse',
@@ -19,14 +19,29 @@ export const MULTIVERSE_DIVISION = {
 /* ============================== Seed data ============================== */
 
 export const MULTIVERSE_SEED_CATEGORIES = [
-  { id: 'apps', divisionId: 'multiverse', name: 'Apps', slug: 'apps', icon: 'smartphone', prompt: 'What are we building?', order: 1, active: true, hasBusinessTypes: true },
-  { id: 'websites', divisionId: 'multiverse', name: 'Websites', slug: 'websites', icon: 'globe', prompt: 'What website do you need?', order: 2, active: true },
-  { id: 'social-media', divisionId: 'multiverse', name: 'Social Media', slug: 'social-media', icon: 'sparkle', prompt: 'What content do you need?', order: 3, active: true },
-  { id: 'branding', divisionId: 'multiverse', name: 'Branding', slug: 'branding', icon: 'tag', prompt: 'What branding do you need?', order: 4, active: true },
-  { id: 'automation', divisionId: 'multiverse', name: 'Automation', slug: 'automation', icon: 'zap', prompt: 'What should we automate?', order: 5, active: true },
-  { id: 'design', divisionId: 'multiverse', name: 'Design', slug: 'design', icon: 'palette', prompt: 'What design work do you need?', order: 6, active: true },
-  { id: 'custom', divisionId: 'multiverse', name: 'Custom', slug: 'custom', icon: 'sparkle', prompt: 'Tell us what you need', order: 7, active: true },
+  { id: 'apps', divisionId: 'multiverse', name: 'Apps', slug: 'apps', icon: 'smartphone', tagline: 'Mobile & Web apps', prompt: 'What are we building?', order: 1, active: true, hasBusinessTypes: true },
+  { id: 'websites', divisionId: 'multiverse', name: 'Websites', slug: 'websites', icon: 'globe', tagline: 'Web & Landing pages', prompt: 'What website do you need?', order: 2, active: true },
+  { id: 'social-media', divisionId: 'multiverse', name: 'Social Media', slug: 'social-media', icon: 'sparkle', tagline: 'Content & Management', prompt: 'What content do you need?', order: 3, active: true },
+  { id: 'branding', divisionId: 'multiverse', name: 'Branding', slug: 'branding', icon: 'tag', tagline: 'Identity & Strategy', prompt: 'What branding do you need?', order: 4, active: true },
+  { id: 'automation', divisionId: 'multiverse', name: 'Automation', slug: 'automation', icon: 'zap', tagline: 'Workflows & Integrations', prompt: 'What should we automate?', order: 5, active: true },
+  { id: 'design', divisionId: 'multiverse', name: 'Design', slug: 'design', icon: 'palette', tagline: 'Graphics & UI/UX', prompt: 'What design work do you need?', order: 6, active: true },
+  { id: 'custom', divisionId: 'multiverse', name: 'Custom Solution', slug: 'custom', icon: 'grid', tagline: 'Tailored to your needs', prompt: 'Tell us what you need', order: 7, active: true },
 ];
+
+/** Tagline fallback by slug — keeps already-seeded databases (which predate the tagline field) pretty. */
+const CATEGORY_TAGLINES = {
+  apps: 'Mobile & Web apps',
+  websites: 'Web & Landing pages',
+  'social-media': 'Content & Management',
+  branding: 'Identity & Strategy',
+  automation: 'Workflows & Integrations',
+  design: 'Graphics & UI/UX',
+  custom: 'Tailored to your needs',
+};
+
+function categoryTagline(cat) {
+  return cat.tagline || CATEGORY_TAGLINES[cat.slug] || cat.prompt || '';
+}
 
 const BUSINESS_TYPES = ['Restaurant', 'Cafe', 'Gym', 'Resort', 'Store', 'Business', 'Artist', 'School', 'Booking', 'Inventory', 'Custom'];
 const BUSINESS_ICON = { Restaurant: 'building', Cafe: 'building', Gym: 'zap', Resort: 'mapPin', Store: 'tag', Business: 'building', Artist: 'music', School: 'identification', Booking: 'calendar', Inventory: 'package', Custom: 'sparkle' };
@@ -179,15 +194,50 @@ function guardOrRedirect(navigate) {
   return draft;
 }
 
+/** A vertical picker card (glow icon, title, tagline) — used in the category grid. */
+function pickerCard(iconName, title, sub, onClick, delay) {
+  return el(
+    'button',
+    { class: 'pick-card', type: 'button', style: { animationDelay: `${delay}ms` }, onClick },
+    [
+      glowIcon(iconName, 24),
+      el('div', { class: 'pick-card-text' }, [
+        el('p', { class: 'pick-card-title' }, title),
+        sub ? el('p', { class: 'pick-card-sub text-secondary' }, sub) : null,
+      ]),
+    ],
+  );
+}
+
+/** The full-width "Custom Solution" card at the bottom of the category picker. */
+function customRow(cat, onClick) {
+  return el('button', { class: 'pick-row', type: 'button', onClick }, [
+    glowIcon(cat.icon || 'grid', 22),
+    el('div', { class: 'pick-row-text' }, [
+      el('p', { class: 'pick-card-title' }, cat.name),
+      el('p', { class: 'pick-card-sub text-secondary' }, categoryTagline(cat)),
+    ]),
+    el('span', { class: 'division-card-chevron' }, [icon('chevronRight', 18)]),
+  ]);
+}
+
 export function renderMultiverseView(navigate) {
   const draft = guardOrRedirect(navigate);
   if (!draft) return el('div');
 
-  const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(pageHeader('What do you need today?', `Quote for ${draft.customer.name}`, () => navigate(-1)));
+  const view = el('div', { class: 'flow-page animate-fade-up' });
+  view.appendChild(flowBack(() => navigate(-1)));
+  view.appendChild(
+    el('div', { class: 'flow-head' }, [
+      el('h1', { class: 'text-display-sm' }, 'What do you need today?'),
+      el('p', { class: 'flow-sub text-secondary' }, ['Building the right solution for ', el('strong', {}, draft.customer.name), '.']),
+    ]),
+  );
 
-  const grid = el('div', { class: 'picker-grid' }, [spinner(true)]);
-  wrapper.appendChild(grid);
+  const grid = el('div', { class: 'pick-grid' }, [spinner(true)]);
+  view.appendChild(grid);
+  const rowSlot = el('div', { style: { marginTop: 'var(--space-3)' } });
+  view.appendChild(rowSlot);
 
   db.collection(COLLECTIONS.categories)
     .where('divisionId', '==', 'multiverse')
@@ -195,31 +245,32 @@ export function renderMultiverseView(navigate) {
     .then((snap) => {
       const categories = snap.docs.map((d) => d.data()).filter((c) => c.active).sort((a, b) => a.order - b.order);
       grid.innerHTML = '';
-      for (const cat of categories) {
-        grid.appendChild(
-          card({
-            interactive: true,
-            className: 'picker-card',
-            pad: false,
-            onClick: () => navigate(`/multiverse/${cat.slug}`),
-            children: [tileIcon(cat.icon), el('span', { class: 'text-body-md', style: { fontSize: '14px' } }, cat.name)],
-          }),
-        );
-      }
+      const gridCats = categories.filter((c) => c.slug !== 'custom');
+      const customCat = categories.find((c) => c.slug === 'custom');
+      gridCats.forEach((cat, i) => {
+        grid.appendChild(pickerCard(cat.icon, cat.name, categoryTagline(cat), () => navigate(`/multiverse/${cat.slug}`), i * 40));
+      });
+      if (customCat) rowSlot.appendChild(customRow(customCat, () => navigate(`/multiverse/${customCat.slug}`)));
     });
 
-  return wrapper;
+  return view;
 }
 
 export function renderAppsBusinessView(navigate) {
   const draft = guardOrRedirect(navigate);
   if (!draft) return el('div');
 
-  const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(pageHeader('What are we building?', 'Pick the closest match', () => navigate(-1)));
+  const view = el('div', { class: 'flow-page animate-fade-up' });
+  view.appendChild(flowBack(() => navigate(-1)));
+  view.appendChild(
+    el('div', { class: 'flow-head' }, [
+      el('h1', { class: 'text-display-sm' }, 'What are we building?'),
+      el('p', { class: 'flow-sub text-secondary' }, 'Pick the closest match to get started.'),
+    ]),
+  );
 
-  const grid = el('div', { class: 'picker-grid' }, [spinner(true)]);
-  wrapper.appendChild(grid);
+  const grid = el('div', { class: 'pick-grid' }, [spinner(true)]);
+  view.appendChild(grid);
 
   db.collection(COLLECTIONS.businessTypes)
     .where('categoryId', '==', 'apps')
@@ -227,20 +278,12 @@ export function renderAppsBusinessView(navigate) {
     .then((snap) => {
       const types = snap.docs.map((d) => d.data()).filter((b) => b.active).sort((a, b) => a.order - b.order);
       grid.innerHTML = '';
-      for (const bt of types) {
-        grid.appendChild(
-          card({
-            interactive: true,
-            className: 'picker-card',
-            pad: false,
-            onClick: () => navigate(`/multiverse/apps/${bt.id}`),
-            children: [tileIcon(bt.icon), el('span', { class: 'text-body-md', style: { fontSize: '14px' } }, bt.name)],
-          }),
-        );
-      }
+      types.forEach((bt, i) => {
+        grid.appendChild(pickerCard(bt.icon, bt.name, null, () => navigate(`/multiverse/apps/${bt.id}`), i * 30));
+      });
     });
 
-  return wrapper;
+  return view;
 }
 
 export function renderAppsModulesView(navigate, businessTypeId) {

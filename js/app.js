@@ -2,7 +2,7 @@
 // (side nav / bottom nav / top bar), and dispatches each route to its view module.
 
 import './firebase.js';
-import { el, clear, icon, card, tileIcon, button, emptyState, spinner, loadingScreen } from './ui.js';
+import { el, clear, icon, button, emptyState, spinner, loadingScreen, glowIcon, brandMark } from './ui.js';
 import { initAuth, onAuthChange, isAdmin, getCurrentProfile, signOutUser, renderLoginView } from './auth.js';
 import { resetDraft, setDivision, renderCustomerView, renderQuoteReviewView } from './quotes.js';
 import { renderUniverseView } from './universe.js';
@@ -12,10 +12,10 @@ import { renderAdminView, seedDatabase } from './settings.js';
 import { db, COLLECTIONS } from './firebase.js';
 
 const routes = [
-  { path: '/', render: renderHomeView },
-  { path: '/customer', render: (nav) => renderCustomerView(nav) },
+  { path: '/', render: renderHomeView, fixed: true },
+  { path: '/customer', render: (nav) => renderCustomerView(nav), fixed: true },
   { path: '/universe', render: (nav) => renderUniverseView(nav) },
-  { path: '/multiverse', render: (nav) => renderMultiverseView(nav) },
+  { path: '/multiverse', render: (nav) => renderMultiverseView(nav), fixed: true },
   { path: '/multiverse/apps', render: (nav) => renderAppsBusinessView(nav) },
   { path: '/multiverse/apps/:businessTypeId', render: (nav, p) => renderAppsModulesView(nav, p.businessTypeId) },
   { path: '/multiverse/:categorySlug', render: (nav, p) => renderCategoryServicesView(nav, p.categorySlug) },
@@ -85,6 +85,9 @@ function renderRoute() {
     return;
   }
 
+  // Fixed flows fill exactly one viewport and never scroll the window.
+  document.body.classList.toggle('view-fixed', !!match.route.fixed);
+
   const node = match.route.render(navigate, match.params);
   clear(contentRoot);
   contentRoot.appendChild(node);
@@ -108,7 +111,7 @@ function buildSideNav() {
 
   sidenav.appendChild(
     el('div', { class: 'row', style: { gap: '10px', marginBottom: '32px', padding: '0 4px' } }, [
-      el('div', { class: 'login-mark', style: { width: '36px', height: '36px', fontSize: '16px', borderRadius: '10px' } }, 'K'),
+      brandMark({ size: 38, rounded: '11px' }),
       el('div', {}, [el('p', { class: 'text-body-md' }, 'Kode31'), el('p', { class: 'text-caption' }, 'Quote Studio')]),
     ]),
   );
@@ -136,7 +139,13 @@ function buildSideNav() {
 function buildBottomNav() {
   const bottomnav = el('nav', { class: 'app-bottomnav' });
   for (const item of NAV_ITEMS()) {
-    bottomnav.appendChild(el('a', { href: `#${item.path}`, class: 'bottomnav-item', dataset: { path: item.path } }, [icon(item.icon, 22), item.label]));
+    bottomnav.appendChild(
+      el('a', { href: `#${item.path}`, class: 'bottomnav-item', dataset: { path: item.path } }, [
+        el('span', { class: 'bn-icon' }, [icon(item.icon, 21)]),
+        el('span', {}, item.label),
+        el('span', { class: 'bn-dot' }),
+      ]),
+    );
   }
   return bottomnav;
 }
@@ -159,21 +168,25 @@ function updateNavActiveState(hash) {
 /* ============================== Home view ============================== */
 
 function renderHomeView(navigate) {
-  const profile = getCurrentProfile();
-  const wrapper = el('div', { class: 'animate-fade-up' });
-  wrapper.appendChild(el('p', { class: 'text-secondary text-caption' }, profile?.name ? `Welcome back, ${profile.name.split(' ')[0]}` : 'Welcome'));
-  wrapper.appendChild(el('h1', { class: 'heading-hero', style: { marginTop: '4px' } }, "Let's build a quote"));
-  wrapper.appendChild(el('p', { class: 'text-secondary text-body', style: { marginTop: '8px', marginBottom: '24px', maxWidth: '420px' } }, 'Choose a division to begin. Everything updates live as you go.'));
+  const view = el('div', { class: 'home-view animate-fade-up' });
 
-  const grid = el('div', { class: 'division-grid' }, [spinner(true)]);
-  wrapper.appendChild(grid);
+  const hero = el('div', { class: 'home-hero' }, [
+    el('p', { class: 'home-eyebrow' }, 'Kode31 Quote Studio'),
+    el('h1', { class: 'text-display home-title' }, ['Time to', el('br'), el('span', { class: 'text-metallic' }, 'Quote')]),
+    el('p', { class: 'home-sub text-secondary' }, ['Create professional quotes', el('br'), 'in under a minute.']),
+    el('div', { class: 'home-divider' }),
+  ]);
+  view.appendChild(hero);
+
+  const list = el('div', { class: 'division-list' }, [spinner(true)]);
+  view.appendChild(list);
 
   db.collection(COLLECTIONS.divisions)
     .orderBy('order', 'asc')
     .get()
     .then((snap) => {
       const divisions = snap.docs.map((d) => d.data());
-      grid.innerHTML = '';
+      list.innerHTML = '';
 
       if (divisions.length === 0) {
         const seedAction = isAdmin()
@@ -186,7 +199,7 @@ function renderHomeView(navigate) {
               },
             })
           : el('p', { class: 'text-caption' }, 'Ask an admin to load the starter catalog.');
-        grid.appendChild(
+        list.appendChild(
           emptyState({
             iconName: 'sparkle',
             title: 'Catalog is empty',
@@ -197,28 +210,34 @@ function renderHomeView(navigate) {
         return;
       }
 
-      for (const division of divisions) {
-        grid.appendChild(
-          card({
-            interactive: true,
-            className: 'division-card',
-            onClick: () => {
-              resetDraft();
-              setDivision(division);
-              navigate('/customer');
+      divisions.forEach((division, i) => {
+        list.appendChild(
+          el(
+            'button',
+            {
+              class: 'division-card',
+              type: 'button',
+              style: { animationDelay: `${i * 70}ms` },
+              onClick: () => {
+                resetDraft();
+                setDivision(division);
+                navigate('/customer');
+              },
             },
-            children: [
-              tileIcon(division.icon),
-              el('h2', { class: 'heading-lg', style: { marginTop: '20px' } }, division.name),
-              el('p', { class: 'text-secondary text-body', style: { marginTop: '4px' } }, division.tagline),
-              el('div', { class: 'division-card-arrow' }, [`Enter ${division.name}`, icon('arrowRight', 16)]),
+            [
+              glowIcon(division.icon, 26),
+              el('div', { class: 'division-card-text' }, [
+                el('p', { class: 'division-card-title' }, division.name),
+                el('p', { class: 'division-card-sub text-secondary' }, division.tagline),
+              ]),
+              el('span', { class: 'division-card-chevron' }, [icon('chevronRight', 20)]),
             ],
-          }),
+          ),
         );
-      }
+      });
     });
 
-  return wrapper;
+  return view;
 }
 
 /* ============================== Boot ============================== */
@@ -234,6 +253,7 @@ function boot() {
   onAuthChange((user, profile) => {
     if (!user) {
       shellUid = null;
+      document.body.classList.remove('view-fixed');
       clear(appRoot);
       appRoot.appendChild(renderLoginView());
       return;

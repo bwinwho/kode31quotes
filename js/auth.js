@@ -1,7 +1,7 @@
 // auth.js — Firebase Authentication, team-member profiles, and the login view.
 
 import { auth, db, COLLECTIONS, nowMs } from './firebase.js';
-import { el, button, textInput } from './ui.js';
+import { el, button, textInput, brandMark } from './ui.js';
 
 let currentUser = null; // firebase.auth().currentUser
 let currentProfile = null; // { uid, name, email, role, createdAt }
@@ -150,7 +150,7 @@ export function renderLoginView() {
 
     wrapper.appendChild(
       el('div', { class: 'login-brand animate-fade-up' }, [
-        el('div', { class: 'login-mark' }, 'K'),
+        brandMark({ size: 56, rounded: 'var(--radius-lg)' }),
         el('div', { style: { textAlign: 'center' } }, [
           el('p', { class: 'heading-page' }, 'Kode31 Quote Studio'),
           el('p', { class: 'text-caption' }, 'Internal tool · Team access only'),

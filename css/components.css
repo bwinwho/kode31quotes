@@ -169,6 +169,47 @@
   height: 24px;
 }
 
+/* Circular outline icon with a soft radial glow behind it. */
+.glow-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.glow-icon::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: var(--glow-icon);
+  pointer-events: none;
+}
+
+.glow-icon svg {
+  position: relative;
+}
+
+/* Brand mark (logo.png with graceful "K" fallback). */
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.brand-mark--fallback {
+  background: var(--color-text);
+  color: var(--color-accent-text);
+}
+
 /* ---- Inputs ---- */
 
 .field {
@@ -417,21 +458,49 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
+  gap: 2px;
+  padding: 0 var(--space-2);
   color: var(--color-text-tertiary);
-  font-size: 11px;
-  font-weight: var(--weight-medium);
+  font-size: 10.5px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.bottomnav-item .bn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: background var(--duration-base) var(--ease), box-shadow var(--duration-base) var(--ease);
 }
 
 .bottomnav-item svg {
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
+}
+
+.bottomnav-item .bn-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background var(--duration-base) var(--ease);
 }
 
 .bottomnav-item.is-active {
   color: var(--color-text);
+}
+
+.bottomnav-item.is-active .bn-icon {
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.bottomnav-item.is-active .bn-dot {
+  background: var(--color-text);
 }
 
 /* ---- Avatar ---- */

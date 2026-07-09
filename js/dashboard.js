@@ -2,7 +2,7 @@
 // and the Signed Customers roster (a lightweight CRM view over Signed/Accepted quotes).
 
 import { el, card, statusBadge, iconButton, button, emptyState, spinner, formatDate, formatINR, toast, confirmDialog } from './ui.js';
-import { listenQuotes, getQuoteById, duplicateQuote, deleteQuote, updateQuoteStatus, loadQuoteIntoDraft } from './quotes.js';
+import { listenQuotes, getQuoteById, duplicateQuote, deleteQuote, updateQuoteStatus, loadQuoteIntoDraft, renderBill } from './quotes.js';
 import { getCompanySettings } from './settings.js';
 import { generateQuotePdf } from './pdf.js';
 
@@ -169,47 +169,13 @@ export function renderQuoteDetailView(navigate, id) {
     ]);
     wrapper.appendChild(headerRow);
 
-    wrapper.appendChild(
-      card({
-        children: [
-          el('p', { class: 'text-eyebrow', style: { marginBottom: '10px' } }, 'Customer'),
-          el('p', { class: 'text-body-md' }, quote.customer?.name),
-          el('p', { class: 'text-caption', style: { marginTop: '2px' } }, quote.customer?.phone),
-          quote.customer?.company ? el('p', { class: 'text-caption' }, quote.customer.company) : null,
-        ],
-      }),
-    );
+    // Premium bill preview (company settings fill in once loaded).
+    const billSlot = el('div', { style: { marginBottom: '16px' } }, [renderBill(quote, {})]);
+    wrapper.appendChild(billSlot);
+    getCompanySettings().then((s) => { billSlot.innerHTML = ''; billSlot.appendChild(renderBill(quote, s)); });
 
-    wrapper.appendChild(
-      card({
-        children: [
-          el('p', { class: 'text-eyebrow' }, 'Services'),
-          ...quote.items.map((item) =>
-            el('div', { class: 'quote-line' }, [
-              el('div', {}, [
-                el('p', { class: 'text-body-md' }, [item.name, item.quantity > 1 ? el('span', { class: 'text-secondary' }, ` × ${item.quantity}`) : null]),
-                el('p', { class: 'text-caption', style: { marginTop: '2px' } }, [item.categoryName, item.businessTypeName].filter(Boolean).join(' · ')),
-              ]),
-              el('p', { class: 'text-price' }, formatINR(item.lineTotal)),
-            ]),
-          ),
-        ],
-      }),
-    );
-
-    wrapper.appendChild(
-      card({
-        children: [
-          totalsRow('Subtotal', formatINR(quote.subtotal)),
-          quote.discount?.amount > 0 ? totalsRow('Discount', `− ${formatINR(quote.discount.amount)}`) : null,
-          quote.annualTotal > 0 ? totalsRow('Annual Charges', formatINR(quote.annualTotal)) : null,
-          quote.gst?.enabled ? totalsRow(`GST (${quote.gst.rate}%)`, formatINR(quote.gst.amount)) : null,
-          el('div', { class: 'totals-row grand' }, [el('span', { class: 'heading-section' }, 'Grand Total'), el('span', { class: 'heading-lg' }, formatINR(quote.total))]),
-        ],
-      }),
-    );
-
-    const statusCard = card({ children: [el('p', { class: 'text-eyebrow', style: { marginBottom: '12px' } }, 'Status')] });
+    const statusCard = card({ children: [el('p', { class: 'text-eyebrow', style: { marginBottom: '12px' } }, 'Status')], className: 'stack' });
+    statusCard.style.marginBottom = '16px';
     const statusButtons = el('div', { class: 'row', style: { gap: '8px', flexWrap: 'wrap' } });
     for (const s of STATUSES) {
       statusButtons.appendChild(
@@ -280,10 +246,6 @@ export function renderQuoteDetailView(navigate, id) {
   });
 
   return wrapper;
-}
-
-function totalsRow(label, value) {
-  return el('div', { class: 'totals-row' }, [el('span', { class: 'text-secondary' }, label), el('span', { class: 'text-body-md' }, value)]);
 }
 
 /* ============================== Signed customers ============================== */

@@ -4,8 +4,8 @@
 
 import { db, COLLECTIONS, stripUndefined, nowMs } from './firebase.js';
 import {
-  el, card, tileIcon, icon, button, iconButton, textInput, textareaInput,
-  checkRow, switchToggle, badge, formatINR, generateQuoteNumber, uid,
+  el, card, tileIcon, glowIcon, icon, button, iconButton, textInput, textareaInput,
+  checkRow, switchToggle, badge, formatINR, formatDate, generateQuoteNumber, uid,
 } from './ui.js';
 import { getCurrentProfile } from './auth.js';
 import { getCompanySettings } from './settings.js';
@@ -288,6 +288,31 @@ export function loadQuoteIntoDraft(quote) {
  * and bundle-quantity stepper. `onChange` is called after any state mutation so the caller
  * can re-render dependents (e.g. the floating quote bar).
  */
+/** Heuristic icon for a service based on its name / category (services don't store an icon). */
+function deriveServiceIcon(service, categoryName) {
+  const n = `${service.name} ${categoryName || ''}`.toLowerCase();
+  const rules = [
+    [/qr/, 'grid'],
+    [/menu/, 'fileText'],
+    [/web ?site|landing|portfolio|blog/, 'globe'],
+    [/app|mobile/, 'smartphone'],
+    [/order|store|ecommerce|delivery|shop/, 'package'],
+    [/book|schedul|calendar/, 'calendar'],
+    [/loyal|reward|member/, 'sparkle'],
+    [/feedback|review|survey/, 'checkCircle'],
+    [/dashboard|staff|admin|crm/, 'grid'],
+    [/song|music|anthem|jingle|theme|track/, 'music'],
+    [/podcast|audio|sound|voice|mix/, 'zap'],
+    [/logo|brand|identity/, 'tag'],
+    [/design|graphic|ui|ux|template|packag|print|deck/, 'palette'],
+    [/automat|workflow|integrat|chatbot|whatsapp/, 'zap'],
+    [/post|story|reel|content|social|video/, 'sparkle'],
+    [/custom/, 'grid'],
+  ];
+  for (const [re, ic] of rules) if (re.test(n)) return ic;
+  return 'sparkle';
+}
+
 export function renderServiceCard(service, categoryName, businessTypeName, onChange) {
   let expanded = false;
   const container = el('div', {});
@@ -300,41 +325,38 @@ export function renderServiceCard(service, categoryName, businessTypeName, onCha
   function build() {
     const added = hasItem(service.id);
     const item = getItem(service.id);
-    const priceLabel = service.priceType === 'fixed' ? formatINR(service.startingPrice) : `Starting From ${formatINR(service.startingPrice)}`;
+    const svcIcon = deriveServiceIcon(service, categoryName);
 
     const toggleAdd = () => {
       if (added) {
         removeItem(service.id);
-        expanded = false;
       } else {
         addService(service, categoryName, businessTypeName);
-        expanded = true;
       }
       if (onChange) onChange();
       paint();
     };
 
-    const head = el(
-      'div',
-      { class: 'service-card-head', onClick: () => { expanded = !expanded; paint(); } },
-      [
-        el('div', { style: { minWidth: 0 } }, [
-          el('div', { class: 'row', style: { gap: '8px', flexWrap: 'wrap' } }, [
-            el('h3', { class: 'text-body-md', style: { fontSize: '17px' } }, service.name),
-            service.bundlePricing?.enabled ? badge('Bundle available', 'warning') : null,
+    const head = el('div', { class: 'svc-head' }, [
+      el('button', { class: 'svc-main', type: 'button', onClick: () => { expanded = !expanded; paint(); } }, [
+        glowIcon(svcIcon, 24),
+        el('div', { class: 'svc-info' }, [
+          el('div', { class: 'svc-title-row' }, [
+            el('h3', { class: 'svc-title' }, service.name),
+            service.bundlePricing?.enabled ? badge('Bundle', 'warning') : null,
           ]),
-          el('p', { class: 'text-price', style: { marginTop: '6px', fontSize: '15px' } }, priceLabel),
-          service.deliveryTime ? el('p', { class: 'text-caption', style: { marginTop: '6px' } }, `Delivery: ${service.deliveryTime}`) : null,
+          service.priceType !== 'fixed' ? el('p', { class: 'svc-from' }, 'Starting from') : null,
+          el('p', { class: 'svc-price' }, formatINR(service.startingPrice)),
+          service.deliveryTime
+            ? el('p', { class: 'svc-delivery' }, [icon('clock', 13), `Delivery: ${service.deliveryTime}`])
+            : null,
         ]),
-        button({
-          label: added ? 'Added' : 'Add',
-          icon: added ? 'check' : undefined,
-          variant: added ? 'secondary' : 'primary',
-          size: 'sm',
-          onClick: (e) => { e.stopPropagation(); toggleAdd(); },
-        }),
-      ],
-    );
+      ]),
+      el('button', { class: `svc-add${added ? ' is-added' : ''}`, type: 'button', 'aria-label': added ? 'Remove' : 'Add', onClick: (e) => { e.stopPropagation(); toggleAdd(); } }, [
+        el('span', { class: 'svc-add-circle' }, [icon(added ? 'check' : 'plus', 20)]),
+        el('span', { class: 'svc-add-label' }, added ? 'Added' : 'Add'),
+      ]),
+    ]);
 
     const bodyParts = [];
 
@@ -413,13 +435,13 @@ export function renderServiceCard(service, categoryName, businessTypeName, onCha
       );
     }
 
-    if (!added) {
-      bodyParts.push(button({ label: 'Add to Quote', full: true, onClick: toggleAdd, size: 'lg' }));
+    if (!added && bodyParts.length) {
+      bodyParts.push(button({ label: 'Add to Quote', icon: 'plus', full: true, onClick: toggleAdd, size: 'lg' }));
     }
 
-    const wrap = card({ pad: false, className: `service-card${added ? ' card-selected' : ''}` });
+    const wrap = el('div', { class: `svc-card${added ? ' is-added' : ''}` });
     wrap.appendChild(head);
-    if (expanded) wrap.appendChild(el('div', { class: 'service-card-body animate-fade-in' }, bodyParts));
+    if (expanded && bodyParts.length) wrap.appendChild(el('div', { class: 'svc-body animate-fade-in' }, bodyParts));
     return wrap;
   }
 
@@ -440,14 +462,16 @@ function buildQtyStepper(value, onChange) {
 export function renderQuoteBar(navigate) {
   if (draft.items.length === 0) return null;
   const total = computeGrandTotal();
+  const count = draft.items.length;
   return el('div', {}, [
     // Occupies real layout space so the page can scroll its last items clear of the fixed bar below.
     el('div', { class: 'quote-bar-spacer' }),
     el('div', { class: 'quote-bar animate-fade-up' }, [
       el('div', { class: 'quote-bar-inner' }, [
-        el('div', {}, [
-          el('p', { class: 'text-caption' }, `${draft.items.length} service${draft.items.length > 1 ? 's' : ''} selected`),
-          el('p', { class: 'text-price', style: { fontSize: '18px' } }, formatINR(total)),
+        el('span', { class: 'qbar-bag' }, [icon('bag', 20)]),
+        el('div', { class: 'qbar-text' }, [
+          el('p', { class: 'qbar-count' }, `${count} service${count > 1 ? 's' : ''} selected`),
+          el('p', { class: 'qbar-total' }, formatINR(total)),
         ]),
         button({ label: 'Review Quote', icon: 'arrowRight', onClick: () => navigate('/quote') }),
       ]),
@@ -466,27 +490,61 @@ export function renderCustomerView(navigate) {
   let phone = draft.customer?.phone || '';
   let company = draft.customer?.company || '';
 
-  const wrapper = el('div', { class: 'animate-fade-up', style: { maxWidth: '480px', margin: '0 auto' } });
-
-  const form = el(
-    'form',
-    { class: 'stack', style: { gap: '16px', marginTop: '16px' } },
-    [
-      textInput({ label: 'Customer Name', value: name, placeholder: 'e.g. Aditi Sharma', required: true, autofocus: true, onInput: (v) => (name = v) }),
-      textInput({ label: 'Phone Number', type: 'tel', value: phone, placeholder: 'e.g. 98765 43210', required: true, onInput: (v) => (phone = v) }),
-      textInput({ label: 'Company (optional)', value: company, placeholder: 'e.g. Studio Nine', onInput: (v) => (company = v) }),
-    ],
+  const view = el('div', { class: 'flow-page animate-fade-up' });
+  view.appendChild(flowTop(() => navigate(-1), 1, 3));
+  view.appendChild(
+    el('div', { class: 'flow-head' }, [
+      el('h1', { class: 'text-display-sm' }, 'Customer Details'),
+      el('p', { class: 'flow-sub text-secondary' }, "Let's get to know your customer."),
+    ]),
   );
+
+  const iconField = (iconName, label, optional, inputEl) =>
+    el('div', { class: 'icon-field' }, [
+      el('div', { class: 'icon-field-icon' }, [icon(iconName, 20)]),
+      el('div', { class: 'icon-field-body' }, [
+        el('label', { class: 'icon-field-label' }, [label, optional ? el('span', { class: 'icon-field-optional' }, ' (optional)') : null]),
+        inputEl,
+      ]),
+    ]);
+
+  const nameInput = el('input', { class: 'input', value: name, placeholder: 'e.g. Aditi Sharma', required: true, oninput: (e) => (name = e.target.value) });
+  const phoneInput = el('input', { class: 'input', type: 'tel', value: phone, placeholder: 'e.g. 98765 43210', required: true, oninput: (e) => (phone = e.target.value) });
+  const companyInput = el('input', { class: 'input', value: company, placeholder: 'e.g. Studio Nine', oninput: (e) => (company = e.target.value) });
+
+  const form = el('form', { class: 'card customer-card' }, [
+    iconField('user', 'Customer Name', false, nameInput),
+    iconField('phone', 'Phone Number', false, phoneInput),
+    iconField('building', 'Company', true, companyInput),
+    button({ label: 'Continue', icon: 'arrowRight', size: 'lg', full: true, type: 'submit' }),
+  ]);
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     setCustomer({ name: name.trim(), phone: phone.trim(), company: company.trim() || undefined });
     navigate(draft.division.id === 'universe' ? '/universe' : '/multiverse');
   });
-  form.appendChild(button({ label: 'Continue', icon: 'arrowRight', size: 'lg', full: true, type: 'submit' }));
 
-  wrapper.appendChild(pageHeader('Customer Details', `Starting a ${draft.division.name} quote`, () => navigate(-1)));
-  wrapper.appendChild(form);
-  return wrapper;
+  view.appendChild(form);
+  return view;
+}
+
+/** Just a circular back button in its own row — for flows without a step indicator. */
+export function flowBack(onBack) {
+  return el('div', { class: 'flow-back' }, [iconButton({ iconName: 'arrowLeft', variant: 'secondary', onClick: onBack, ariaLabel: 'Back' })]);
+}
+
+/** Fixed-flow header: circular back button on the left, centered step indicator. */
+export function flowTop(onBack, step, total) {
+  const dots = el('div', { class: 'step-dots' });
+  for (let i = 1; i <= total; i++) {
+    dots.appendChild(el('span', { class: `step-dot${i <= step ? ' is-done' : ''}${i === step ? ' is-current' : ''}` }));
+    if (i < total) dots.appendChild(el('span', { class: `step-line${i < step ? ' is-done' : ''}` }));
+  }
+  return el('div', { class: 'flow-top' }, [
+    onBack ? iconButton({ iconName: 'arrowLeft', variant: 'secondary', onClick: onBack, ariaLabel: 'Back' }) : el('span'),
+    el('div', { class: 'step-indicator' }, [dots, step ? el('p', { class: 'step-label' }, `STEP ${step} OF ${total}`) : null]),
+    el('span', { class: 'flow-top-spacer' }),
+  ]);
 }
 
 export function pageHeader(title, subtitle, onBack, action) {
@@ -498,6 +556,111 @@ export function pageHeader(title, subtitle, onBack, action) {
     ]),
     action || null,
   ]);
+}
+
+/* ============================== Premium bill ============================== */
+
+/**
+ * The premium branded quotation, rendered as on-screen DOM. Shared by the Review page
+ * and the saved-quote detail view, and mirrored by the PDF generator (pdf.js).
+ */
+export function renderBill(quote, company) {
+  const co = company || {};
+  const brandName = (co.name || 'Kode31').toUpperCase();
+
+  const brandMarkEl = el('div', { class: 'bill-logo-wrap' });
+  if (co.logoUrl) {
+    brandMarkEl.appendChild(el('img', { src: co.logoUrl, alt: brandName, class: 'bill-logo-img' }));
+  } else {
+    brandMarkEl.appendChild(el('h2', { class: 'bill-logo' }, brandName));
+  }
+
+  const party = (eyebrowIcon, eyebrow, name, subs, align) =>
+    el('div', { class: `bill-card bill-party${align === 'right' ? ' is-right' : ''}` }, [
+      el('p', { class: 'bill-eyebrow' }, [icon(eyebrowIcon, 13), eyebrow]),
+      el('p', { class: 'bill-party-name' }, name || '—'),
+      ...subs.filter(Boolean).map((s) => el('p', { class: 'bill-party-sub text-secondary' }, s)),
+    ]);
+
+  const totalsRows = [billTotalRow('Subtotal', formatINR(quote.subtotal))];
+  if (quote.discount?.amount > 0) {
+    totalsRows.push(billTotalRow(`Discount${quote.discount.type === 'percent' ? ` (${quote.discount.value}%)` : ''}`, `− ${formatINR(quote.discount.amount)}`));
+  }
+  if (quote.annualTotal > 0) totalsRows.push(billTotalRow('Annual charges', formatINR(quote.annualTotal)));
+  if (quote.gst?.enabled) totalsRows.push(billTotalRow(`GST (${quote.gst.rate}%)`, formatINR(quote.gst.amount)));
+
+  const preparedBy = quote.createdBy?.name || co.name || 'Kode31';
+
+  return el('div', { class: 'bill' }, [
+    // Header band
+    el('div', { class: 'bill-head' }, [
+      el('div', { class: 'bill-brand' }, [brandMarkEl, el('p', { class: 'bill-brand-sub' }, `${quote.divisionName || ''} Studio Quotation`)]),
+      el('div', { class: 'bill-metablock' }, [
+        el('p', { class: 'bill-meta-label' }, 'QUOTE NUMBER'),
+        el('p', { class: 'bill-number' }, quote.quoteNumber),
+        el('p', { class: 'bill-date' }, [icon('calendar', 12), formatDate(quote.createdAt)]),
+      ]),
+    ]),
+
+    // Parties
+    el('div', { class: 'bill-parties' }, [
+      party('fileText', 'BILLED TO', quote.customer?.name, [quote.customer?.phone, quote.customer?.company]),
+      party('user', 'PREPARED BY', preparedBy, [co.name || 'Kode31', co.email], 'right'),
+    ]),
+
+    // Selected services
+    el('div', { class: 'bill-card bill-services' }, [
+      el('p', { class: 'bill-eyebrow' }, 'SELECTED SERVICES'),
+      el('div', { class: 'bill-services-head' }, [el('span', {}, 'SERVICE & DETAILS'), el('span', {}, 'PRICE')]),
+      ...quote.items.map((item) =>
+        el('div', { class: 'bill-item' }, [
+          el('div', { class: 'bill-item-icon' }, [icon(deriveServiceIcon(item, item.categoryName), 18)]),
+          el('div', { class: 'bill-item-body' }, [
+            el('p', { class: 'bill-item-name' }, [item.name, item.quantity > 1 ? el('span', { class: 'text-secondary' }, `  × ${item.quantity}`) : null]),
+            el('p', { class: 'bill-item-meta' }, [item.categoryName, item.businessTypeName, item.deliveryTime ? `Delivery: ${item.deliveryTime}` : null].filter(Boolean).join('  ·  ')),
+            item.includes?.length ? el('div', { class: 'bill-chips' }, item.includes.join('   ·   ')) : null,
+            ...(item.selectedUpgrades || []).map((u) => el('p', { class: 'bill-subline' }, [el('span', {}, `+ ${u.name}`), el('span', {}, formatINR(u.price))])),
+            ...(item.annualCharges || []).filter((c) => c.included).map((c) => el('p', { class: 'bill-subline' }, [el('span', {}, `Annual · ${c.name}`), el('span', {}, `${formatINR(c.price)}/yr`)])),
+          ]),
+          el('p', { class: 'bill-item-price' }, formatINR(item.lineTotal)),
+        ]),
+      ),
+      el('div', { class: 'bill-totals' }, [
+        el('div', { class: 'bill-totals-box' }, [
+          ...totalsRows,
+          el('div', { class: 'bill-grand' }, [el('span', {}, 'Grand Total'), el('span', { class: 'bill-grand-value' }, formatINR(quote.total))]),
+          el('p', { class: 'bill-grand-note' }, quote.gst?.enabled ? 'Inclusive of applicable taxes' : 'Taxes as applicable'),
+        ]),
+      ]),
+    ]),
+
+    // Terms
+    el('div', { class: 'bill-terms' }, [
+      el('div', { class: 'bill-card' }, [
+        el('p', { class: 'bill-eyebrow' }, [icon('fileText', 13), 'PAYMENT TERMS']),
+        el('p', { class: 'bill-term-text' }, quote.paymentTerms || 'As discussed.'),
+      ]),
+      el('div', { class: 'bill-card' }, [
+        el('p', { class: 'bill-eyebrow' }, [icon('calendar', 13), 'VALIDITY']),
+        el('p', { class: 'bill-term-text' }, `Valid for ${quote.validityDays} days from the date of issue.`),
+      ]),
+    ]),
+
+    // Footer
+    el('div', { class: 'bill-card bill-footer' }, [
+      el('div', { class: 'bill-footer-badge' }, 'K31'),
+      el('p', { class: 'bill-footer-text' }, co.footerText || 'Thank you for choosing Kode31. This quotation is generated digitally and does not require a signature.'),
+      el('div', { class: 'bill-sign' }, [
+        el('span', { class: 'bill-sign-mark', html: '<svg viewBox="0 0 120 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 28s10-20 18-18 4 22 12 22 10-24 18-24 12 16 20 16"/></svg>' }),
+        el('span', { class: 'bill-sign-name' }, preparedBy),
+        el('span', { class: 'bill-sign-role text-secondary' }, co.name || 'Kode31'),
+      ]),
+    ]),
+  ]);
+}
+
+function billTotalRow(label, value) {
+  return el('div', { class: 'bill-total-row' }, [el('span', {}, label), el('span', {}, value)]);
 }
 
 /* ============================== Quote review view ============================== */
@@ -539,77 +702,38 @@ export function renderQuoteReviewView(navigate) {
   const body = el('div', { class: 'stack', style: { gap: '16px' } });
   wrapper.appendChild(body);
 
-  function renderBody() {
-    body.innerHTML = '';
+  const billSlot = el('div');
+  const adjustSlot = el('div');
+  const actionSlot = el('div');
+  body.appendChild(billSlot);
+  body.appendChild(adjustSlot);
+  body.appendChild(actionSlot);
 
-    body.appendChild(
-      card({
-        children: [
-          el('p', { class: 'text-eyebrow', style: { marginBottom: '10px' } }, 'Customer'),
-          el('p', { class: 'text-body-md' }, draft.customer.name),
-          el('p', { class: 'text-secondary text-caption', style: { marginTop: '2px' } }, draft.customer.phone),
-          draft.customer.company ? el('p', { class: 'text-secondary text-caption' }, draft.customer.company) : null,
-        ],
-      }),
-    );
+  function refreshBill() {
+    billSlot.innerHTML = '';
+    billSlot.appendChild(renderBill(buildQuoteRecord(companySettings), companySettings || {}));
+  }
 
-    body.appendChild(
-      card({
-        children: [
-          el('p', { class: 'text-eyebrow', style: { marginBottom: '4px' } }, 'Selected Services'),
-          ...draft.items.map((item) =>
-            el('div', { class: 'quote-line' }, [
-              el('div', { style: { minWidth: 0 } }, [
-                el('p', { class: 'text-body-md' }, [item.name, item.quantity > 1 ? el('span', { class: 'text-secondary' }, ` × ${item.quantity}`) : null]),
-                el('p', { class: 'text-caption', style: { marginTop: '2px' } }, [item.categoryName, item.businessTypeName].filter(Boolean).join(' · ')),
-                item.includes?.length ? el('p', { class: 'text-caption', style: { marginTop: '6px' } }, `Includes: ${item.includes.join(', ')}`) : null,
-              ]),
-              el('p', { class: 'text-price' }, formatINR(item.lineTotal)),
-            ]),
-          ),
-        ],
-      }),
-    );
-
-    body.appendChild(
+  function renderAdjust() {
+    adjustSlot.innerHTML = '';
+    adjustSlot.appendChild(
       card({
         children: [
           el('p', { class: 'text-eyebrow', style: { marginBottom: '14px' } }, 'Adjustments'),
-          el('div', { class: 'form-grid form-grid-2' }, [
-            discountField(),
-            gstField(),
-          ]),
+          el('div', { class: 'form-grid form-grid-2' }, [discountField(), gstField()]),
           el('div', { class: 'form-grid form-grid-2', style: { marginTop: '16px' } }, [
-            textInput({ label: 'Validity (days)', type: 'number', value: draft.validityDays, onInput: (v) => (draft.validityDays = Number(v) || 0) }),
-            textInput({ label: 'Payment Terms', value: draft.paymentTerms, placeholder: companySettings?.paymentTermsDefault || '50% advance…', onInput: (v) => setPaymentTerms(v) }),
+            textInput({ label: 'Validity (days)', type: 'number', value: draft.validityDays, onInput: (v) => { draft.validityDays = Number(v) || 0; refreshBill(); } }),
+            textInput({ label: 'Payment Terms', value: draft.paymentTerms, placeholder: companySettings?.paymentTermsDefault || '50% advance…', onInput: (v) => { setPaymentTerms(v); refreshBill(); } }),
           ]),
           el('div', { style: { marginTop: '16px' } }, [textareaInput({ label: 'Notes (optional)', value: draft.notes, onInput: (v) => setNotes(v) })]),
         ],
       }),
     );
+  }
 
-    const subtotal = computeSubtotal();
-    const discountAmount = computeDiscountAmount();
-    const annualTotal = computeAnnualTotal();
-    const gstAmount = computeGstAmount();
-    const grandTotal = computeGrandTotal();
-
-    body.appendChild(
-      card({
-        children: [
-          totalsRow('Subtotal', formatINR(subtotal)),
-          discountAmount > 0 ? totalsRow('Discount', `− ${formatINR(discountAmount)}`) : null,
-          annualTotal > 0 ? totalsRow('Annual Charges', formatINR(annualTotal)) : null,
-          draft.gstEnabled ? totalsRow(`GST (${draft.gstRate}%)`, formatINR(gstAmount)) : null,
-          el('div', { class: 'totals-row grand' }, [
-            el('span', { class: 'heading-section' }, 'Grand Total'),
-            el('span', { class: 'heading-lg' }, formatINR(grandTotal)),
-          ]),
-        ],
-      }),
-    );
-
-    body.appendChild(
+  function renderActions() {
+    actionSlot.innerHTML = '';
+    actionSlot.appendChild(
       el('div', { class: 'grid-2', style: { gap: '12px' } }, [
         button({
           label: draft.editingId ? 'Saved ✓' : 'Save Quote',
@@ -619,32 +743,31 @@ export function renderQuoteReviewView(navigate) {
           loading: saving,
           onClick: async () => {
             saving = true;
-            renderBody();
+            renderActions();
             try {
               companySettings = companySettings || (await getCompanySettings());
               await saveDraftAsQuote(companySettings);
-              renderBody();
             } finally {
               saving = false;
-              renderBody();
+              renderActions();
             }
           },
         }),
         button({
           label: 'Download PDF',
+          icon: 'download',
           size: 'lg',
           full: true,
           loading: downloading,
           onClick: async () => {
             downloading = true;
-            renderBody();
+            renderActions();
             try {
               companySettings = companySettings || (await getCompanySettings());
-              const record = buildQuoteRecord(companySettings);
-              generateQuotePdf(record, companySettings);
+              generateQuotePdf(buildQuoteRecord(companySettings), companySettings);
             } finally {
               downloading = false;
-              renderBody();
+              renderActions();
             }
           },
         }),
@@ -658,7 +781,7 @@ export function renderQuoteReviewView(navigate) {
       el('div', { class: 'input-group' }, [
         el(
           'select',
-          { class: 'select', style: { flex: '0 0 108px' }, onchange: (e) => setDiscount(e.target.value, draft.discount.value) },
+          { class: 'select', style: { flex: '0 0 108px' }, onchange: (e) => { setDiscount(e.target.value, draft.discount.value); refreshBill(); } },
           [
             el('option', { value: 'flat', selected: draft.discount.type === 'flat' || undefined }, '₹ Flat'),
             el('option', { value: 'percent', selected: draft.discount.type === 'percent' || undefined }, '% Percent'),
@@ -670,7 +793,7 @@ export function renderQuoteReviewView(navigate) {
           min: 0,
           value: draft.discount.value || '',
           placeholder: '0',
-          oninput: (e) => { setDiscount(draft.discount.type, Number(e.target.value) || 0); renderBody(); },
+          oninput: (e) => { setDiscount(draft.discount.type, Number(e.target.value) || 0); refreshBill(); },
         }),
       ]),
     ]);
@@ -681,16 +804,14 @@ export function renderQuoteReviewView(navigate) {
       el('span', { class: 'field-label' }, 'GST'),
       el('div', { class: 'row', style: { height: '50px', padding: '0 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', justifyContent: 'space-between' } }, [
         el('span', { class: 'text-secondary text-body' }, `${draft.gstRate}%`),
-        switchToggle({ checked: draft.gstEnabled, onChange: (v) => { setGst(v); renderBody(); } }),
+        switchToggle({ checked: draft.gstEnabled, onChange: (v) => { setGst(v); renderAdjust(); refreshBill(); } }),
       ]),
     ]);
   }
 
-  getCompanySettings().then((s) => { companySettings = s; });
-  renderBody();
+  refreshBill();
+  renderAdjust();
+  renderActions();
+  getCompanySettings().then((s) => { companySettings = s; refreshBill(); renderAdjust(); });
   return wrapper;
-}
-
-function totalsRow(label, value) {
-  return el('div', { class: 'totals-row' }, [el('span', { class: 'text-secondary' }, label), el('span', { class: 'text-body-md' }, value)]);
 }

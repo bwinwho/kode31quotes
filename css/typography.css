@@ -18,6 +18,30 @@ body {
   font-feature-settings: 'ss01' on, 'cv01' on;
 }
 
+/* Big, extra-heavy hero display (e.g. "Time to Quote", "Customer Details"). */
+.text-display {
+  font-size: clamp(2.75rem, 13.5vw, 4.25rem);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+.text-display-sm {
+  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-weight: var(--weight-black);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+/* Silver metallic fill for accent words inside a display heading. */
+.text-metallic {
+  background: var(--gradient-metallic);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 .heading-hero {
   font-size: var(--text-3xl);
   font-weight: var(--weight-semibold);
@@ -34,8 +58,8 @@ body {
 
 .heading-page {
   font-size: var(--text-xl);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.03em;
   line-height: var(--leading-tight);
 }
 

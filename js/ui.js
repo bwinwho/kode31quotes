@@ -93,6 +93,7 @@ const ICON_PATHS = {
   copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
   fileText: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
   phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/>',
@@ -126,6 +127,8 @@ const ICON_PATHS = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   sparkle: '<path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96l6.13-1.58A2 2 0 0 0 9.94 8.5l1.58-6.13a.5.5 0 0 1 .96 0l1.58 6.13a2 2 0 0 0 1.44 1.44l6.13 1.58a.5.5 0 0 1 0 .96l-6.13 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/>',
   identification: '<rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M4 16c0-1.66 1.79-3 4-3s4 1.34 4 3"/><path d="M14 9h6"/><path d="M14 13h6"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  signature: '<path d="M3 17s2.5-6 5-6 2 4 4 4 3-8 5-8 4 4 4 4"/><path d="M3 21h18"/>',
 };
 
 export function icon(name, size = 20) {
@@ -167,6 +170,34 @@ export function card({ children = [], interactive, selected, onClick, className 
 
 export function tileIcon(name) {
   return el('div', { class: 'tile-icon' }, [icon(name, 24)]);
+}
+
+/** Circular outline icon with a soft radial glow behind it (used on cards & pickers). */
+export function glowIcon(name, size = 24) {
+  return el('div', { class: 'glow-icon' }, [icon(name, size)]);
+}
+
+/**
+ * The Kode31 brand mark. Prefers assets/logo.png; if that 404s (not uploaded yet)
+ * it swaps to a clean "K" monogram so the UI never shows a broken image.
+ */
+export function brandMark({ size = 44, rounded = 'var(--radius-md)' } = {}) {
+  const wrap = el('div', {
+    class: 'brand-mark',
+    style: { width: `${size}px`, height: `${size}px`, borderRadius: rounded },
+  });
+  const img = el('img', {
+    src: 'assets/logo.png',
+    alt: 'Kode31',
+    style: { width: '100%', height: '100%', objectFit: 'contain', borderRadius: rounded },
+  });
+  img.addEventListener('error', () => {
+    wrap.classList.add('brand-mark--fallback');
+    wrap.innerHTML = '';
+    wrap.appendChild(el('span', { style: { fontWeight: '800', fontSize: `${Math.round(size * 0.42)}px` } }, 'K'));
+  });
+  wrap.appendChild(img);
+  return wrap;
 }
 
 /* ============================== Inputs ============================== */

@@ -1,250 +1,272 @@
-// pdf.js — premium branded quotation PDF, drawn with jsPDF (vendored UMD, global window.jspdf).
-// Pure function of (quote, companySettings) — no Firestore access here.
+// pdf.js — premium DARK branded quotation PDF, drawn with jsPDF (vendored UMD, global
+// window.jspdf). Mirrors the on-screen bill (see renderBill in quotes.js). Pure function
+// of (quote, companySettings) — no Firestore access here.
 
 const PAGE_W = 595.28; // A4 pt
 const PAGE_H = 841.89;
-const MARGIN = 48;
-const CONTENT_W = PAGE_W - MARGIN * 2;
+const MARGIN = 40;
+const CW = PAGE_W - MARGIN * 2;
 
-const INK = [10, 10, 10];
-const PAPER = [255, 255, 255];
-const GRAY = [138, 138, 138];
-const LINE = [225, 225, 225];
+const BG = [10, 10, 12];
+const CARD = [22, 22, 24];
+const CARD2 = [26, 26, 28];
+const BORDER = [44, 44, 48];
+const BORDER2 = [58, 58, 64];
+const WHITE = [255, 255, 255];
+const GRAY = [150, 150, 156];
+const FAINT = [104, 104, 110];
 
 export function generateQuotePdf(quote, company) {
+  const co = company || {};
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  let y = 0;
+  let y = MARGIN;
 
-  function newPage() {
+  const setColor = (c) => doc.setTextColor(c[0], c[1], c[2]);
+  const fillPage = () => {
+    doc.setFillColor(...BG);
+    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+  };
+  const card = (x, yy, w, h, fill = CARD) => {
+    doc.setFillColor(...fill);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(x, yy, w, h, 9, 9, 'FD');
+  };
+  const newPage = () => {
     doc.addPage();
+    fillPage();
     y = MARGIN;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(...GRAY);
-    doc.text(`${company.name || 'Kode31'} — Quotation ${quote.quoteNumber} (continued)`, MARGIN, y);
-    y += 24;
-  }
+  };
+  const ensure = (h) => { if (y + h > PAGE_H - MARGIN) newPage(); };
+  const eyebrow = (text, x, yy, align = 'left') => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    setColor(FAINT);
+    doc.text(text, x, yy, { align, charSpace: 0.8 });
+  };
 
-  function ensureSpace(height) {
-    if (y + height > PAGE_H - 90) newPage();
-  }
+  fillPage();
 
-  // ---- Header band ----
-  doc.setFillColor(...INK);
-  doc.rect(0, 0, PAGE_W, 96, 'F');
-  doc.setTextColor(...PAPER);
+  // ---------- Header ----------
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(17);
-  doc.text((company.name || 'KODE31').toUpperCase(), MARGIN, 44);
+  doc.setFontSize(23);
+  setColor(WHITE);
+  doc.text((co.name || 'KODE31').toUpperCase(), MARGIN, y + 20);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(200, 200, 200);
-  doc.text(`${quote.divisionName || ''} Studio Quotation`, MARGIN, 62);
+  setColor(GRAY);
+  doc.text(`${quote.divisionName || ''} Studio Quotation`, MARGIN, y + 36);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(170, 170, 170);
-  doc.text('QUOTE NUMBER', PAGE_W - MARGIN, 32, { align: 'right' });
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  setColor(FAINT);
+  doc.text('QUOTE NUMBER', PAGE_W - MARGIN, y + 8, { align: 'right', charSpace: 0.8 });
   doc.setFontSize(13);
-  doc.setTextColor(...PAPER);
-  doc.text(quote.quoteNumber, PAGE_W - MARGIN, 48, { align: 'right' });
+  setColor(WHITE);
+  doc.text(quote.quoteNumber, PAGE_W - MARGIN, y + 24, { align: 'right' });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(190, 190, 190);
-  doc.text(formatDate(quote.createdAt), PAGE_W - MARGIN, 64, { align: 'right' });
+  doc.setFontSize(9);
+  setColor(GRAY);
+  doc.text(formatDate(quote.createdAt), PAGE_W - MARGIN, y + 39, { align: 'right' });
 
-  y = 96 + 40;
+  y += 54;
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.6);
+  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+  y += 20;
 
-  // ---- Billed to / prepared by ----
-  const colW = CONTENT_W / 2;
-  eyebrow('BILLED TO', MARGIN, y);
-  eyebrow('PREPARED BY', MARGIN + colW, y, 'right', MARGIN + CONTENT_W);
-  y += 16;
+  // ---------- Parties ----------
+  const gap = 14;
+  const pw = (CW - gap) / 2;
+  const partyH = 74;
+  card(MARGIN, y, pw, partyH);
+  card(MARGIN + pw + gap, y, pw, partyH);
+
+  eyebrow('BILLED TO', MARGIN + 16, y + 20);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(...INK);
-  doc.text(quote.customer?.name || '', MARGIN, y);
-  doc.text(quote.createdBy?.name || '', MARGIN + CONTENT_W, y, { align: 'right' });
-  y += 15;
+  doc.setFontSize(12.5);
+  setColor(WHITE);
+  doc.text(quote.customer?.name || '—', MARGIN + 16, y + 40);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9.5);
-  doc.setTextColor(...GRAY);
-  doc.text(quote.customer?.phone || '', MARGIN, y);
-  doc.text(company.name || '', MARGIN + CONTENT_W, y, { align: 'right' });
-  if (quote.customer?.company) {
-    y += 13;
-    doc.text(quote.customer.company, MARGIN, y);
-  }
-  y += 30;
+  doc.setFontSize(9);
+  setColor(GRAY);
+  doc.text(quote.customer?.phone || '', MARGIN + 16, y + 55);
+  if (quote.customer?.company) doc.text(quote.customer.company, MARGIN + 16, y + 67);
 
-  // ---- Services ----
+  const rx = MARGIN + pw + gap + pw - 16;
+  eyebrow('PREPARED BY', rx, y + 20, 'right');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12.5);
+  setColor(WHITE);
+  doc.text(quote.createdBy?.name || co.name || 'Kode31', rx, y + 40, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  setColor(GRAY);
+  doc.text(co.name || 'Kode31', rx, y + 55, { align: 'right' });
+  if (co.email) doc.text(co.email, rx, y + 67, { align: 'right' });
+
+  y += partyH + 18;
+
+  // ---------- Services ----------
   eyebrow('SELECTED SERVICES', MARGIN, y);
+  y += 14;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  setColor(FAINT);
+  doc.text('SERVICE & DETAILS', MARGIN, y, { charSpace: 0.6 });
+  doc.text('PRICE', PAGE_W - MARGIN, y, { align: 'right', charSpace: 0.6 });
+  y += 8;
+  doc.setDrawColor(...BORDER);
+  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
   y += 18;
 
-  for (const item of quote.items) {
-    const includesLines = item.includes?.length ? wrapChips(doc, item.includes, CONTENT_W - 10) : [];
-    const upgradeCount = item.selectedUpgrades?.length || 0;
-    const annualCount = item.annualCharges?.filter((c) => c.included).length || 0;
-    const blockHeight = 40 + includesLines.length * 16 + (upgradeCount + annualCount) * 14 + 16;
-    ensureSpace(blockHeight);
+  quote.items.forEach((item, idx) => {
+    const chips = item.includes?.length ? doc.splitTextToSize(item.includes.join('   ·   '), CW - 120) : [];
+    const subs = [...(item.selectedUpgrades || []).map((u) => [`+ ${u.name}`, money(u.price)]),
+      ...(item.annualCharges || []).filter((c) => c.included).map((c) => [`Annual · ${c.name}`, `${money(c.price)}/yr`])];
+    const blockH = 30 + chips.length * 11 + subs.length * 13 + 14;
+    ensure(blockH);
+
+    if (idx > 0) {
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.5);
+      doc.line(MARGIN, y - 10, PAGE_W - MARGIN, y - 10);
+    }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11.5);
-    doc.setTextColor(...INK);
-    const nameLine = item.quantity > 1 ? `${item.name}  ×${item.quantity}` : item.name;
-    doc.text(nameLine, MARGIN, y);
-    doc.text(formatINR(item.lineTotal), MARGIN + CONTENT_W, y, { align: 'right' });
+    doc.setFontSize(12);
+    setColor(WHITE);
+    doc.text(item.quantity > 1 ? `${item.name}   ×${item.quantity}` : item.name, MARGIN, y);
+    doc.text(money(item.lineTotal), PAGE_W - MARGIN, y, { align: 'right' });
     y += 14;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(...GRAY);
-    const metaBits = [item.categoryName, item.businessTypeName, item.deliveryTime ? `Delivery: ${item.deliveryTime}` : null].filter(Boolean);
-    if (metaBits.length) {
-      doc.text(metaBits.join('  ·  '), MARGIN, y);
-      y += 14;
-    }
+    setColor(GRAY);
+    const meta = [item.categoryName, item.businessTypeName, item.deliveryTime ? `Delivery: ${item.deliveryTime}` : null].filter(Boolean).join('   ·   ');
+    if (meta) { doc.text(meta, MARGIN, y); y += 13; }
 
-    for (const line of includesLines) {
-      doc.setFontSize(8.5);
-      doc.setTextColor(90, 90, 90);
-      doc.text(line, MARGIN, y);
-      y += 14;
-    }
-
-    for (const upg of item.selectedUpgrades || []) {
-      doc.setFontSize(9);
-      doc.setTextColor(70, 70, 70);
-      doc.text(`+ ${upg.name}`, MARGIN, y);
-      doc.text(formatINR(upg.price), MARGIN + CONTENT_W, y, { align: 'right' });
+    chips.forEach((line) => { setColor(FAINT); doc.setFontSize(8.5); doc.text(line, MARGIN, y); y += 11; });
+    subs.forEach(([l, r]) => {
+      doc.setFontSize(8.5); setColor(GRAY);
+      doc.text(l, MARGIN, y);
+      doc.text(r, PAGE_W - MARGIN, y, { align: 'right' });
       y += 13;
-    }
+    });
+    y += 14;
+  });
 
-    for (const chg of (item.annualCharges || []).filter((c) => c.included)) {
-      doc.setFontSize(9);
-      doc.setTextColor(70, 70, 70);
-      doc.text(`Annual · ${chg.name}`, MARGIN, y);
-      doc.text(`${formatINR(chg.price)}/yr`, MARGIN + CONTENT_W, y, { align: 'right' });
-      y += 13;
-    }
-
-    y += 6;
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.5);
-    doc.line(MARGIN, y, MARGIN + CONTENT_W, y);
-    y += 18;
-  }
-
-  // ---- Totals ----
-  ensureSpace(150);
-  const totalsW = 240;
-  const totalsX = MARGIN + CONTENT_W - totalsW;
-  totalRow(totalsX, 'Subtotal', formatINR(quote.subtotal));
-  if (quote.discount?.amount > 0) {
-    totalRow(totalsX, `Discount${quote.discount.type === 'percent' ? ` (${quote.discount.value}%)` : ''}`, `− ${formatINR(quote.discount.amount)}`);
-  }
-  if (quote.annualTotal > 0) totalRow(totalsX, 'Annual Charges', formatINR(quote.annualTotal));
-  if (quote.gst?.enabled) totalRow(totalsX, `GST (${quote.gst.rate}%)`, formatINR(quote.gst.amount));
-
-  y += 6;
-  doc.setDrawColor(...INK);
-  doc.setLineWidth(1);
-  doc.line(totalsX, y, MARGIN + CONTENT_W, y);
-  y += 20;
+  // ---------- Totals box ----------
+  const boxW = 250;
+  const rows = [['Subtotal', money(quote.subtotal)]];
+  if (quote.discount?.amount > 0) rows.push([`Discount${quote.discount.type === 'percent' ? ` (${quote.discount.value}%)` : ''}`, `- ${money(quote.discount.amount)}`]);
+  if (quote.annualTotal > 0) rows.push(['Annual charges', money(quote.annualTotal)]);
+  if (quote.gst?.enabled) rows.push([`GST (${quote.gst.rate}%)`, money(quote.gst.amount)]);
+  const boxH = 30 + rows.length * 16 + 46;
+  ensure(boxH);
+  const boxX = PAGE_W - MARGIN - boxW;
+  card(boxX, y, boxW, boxH, CARD2);
+  let by = y + 24;
+  rows.forEach(([l, r]) => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    setColor(GRAY);
+    doc.text(l, boxX + 16, by);
+    setColor(WHITE);
+    doc.text(r, boxX + boxW - 16, by, { align: 'right' });
+    by += 16;
+  });
+  by += 4;
+  doc.setDrawColor(...BORDER2);
+  doc.line(boxX + 16, by, boxX + boxW - 16, by);
+  by += 20;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(...INK);
-  doc.text('Grand Total', totalsX, y);
-  doc.setFontSize(16);
-  doc.text(formatINR(quote.total), MARGIN + CONTENT_W, y, { align: 'right' });
-  y += 40;
+  doc.setFontSize(12);
+  setColor(WHITE);
+  doc.text('Grand Total', boxX + 16, by);
+  doc.setFontSize(17);
+  doc.text(money(quote.total), boxX + boxW - 16, by + 1, { align: 'right' });
+  by += 15;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  setColor(FAINT);
+  doc.text(quote.gst?.enabled ? 'Inclusive of applicable taxes' : 'Taxes as applicable', boxX + 16, by);
+  y += boxH + 20;
 
-  // ---- Terms ----
-  ensureSpace(90);
-  const half = CONTENT_W / 2;
-  eyebrow('PAYMENT TERMS', MARGIN, y);
-  eyebrow('VALIDITY', MARGIN + half, y);
-  y += 16;
+  // ---------- Terms ----------
+  const termH = 72;
+  ensure(termH);
+  card(MARGIN, y, pw, termH);
+  card(MARGIN + pw + gap, y, pw, termH);
+  eyebrow('PAYMENT TERMS', MARGIN + 16, y + 20);
+  eyebrow('VALIDITY', MARGIN + pw + gap + 16, y + 20);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.setTextColor(60, 60, 60);
-  wrapText(doc, quote.paymentTerms || 'As discussed.', MARGIN, y, half - 16).forEach((line, i) => doc.text(line, MARGIN, y + i * 13));
-  wrapText(doc, `Valid for ${quote.validityDays} days from the date of issue.`, MARGIN + half, y, half - 8).forEach((line, i) =>
-    doc.text(line, MARGIN + half, y + i * 13),
-  );
-  y += 40;
+  setColor(GRAY);
+  doc.splitTextToSize(quote.paymentTerms || 'As discussed.', pw - 32).slice(0, 3).forEach((l, i) => doc.text(l, MARGIN + 16, y + 38 + i * 13));
+  doc.splitTextToSize(`Valid for ${quote.validityDays} days from the date of issue.`, pw - 32).slice(0, 3).forEach((l, i) => doc.text(l, MARGIN + pw + gap + 16, y + 38 + i * 13));
+  y += termH + 18;
 
-  if (company.gstNumber) {
-    ensureSpace(20);
-    doc.setFontSize(9);
-    doc.setTextColor(...GRAY);
-    doc.text(`GSTIN: ${company.gstNumber}`, MARGIN, y);
-    y += 16;
-  }
-  if (company.bankDetails?.accountNumber) {
-    ensureSpace(30);
-    eyebrow('BANK DETAILS', MARGIN, y);
-    y += 14;
-    doc.setFontSize(9);
-    doc.setTextColor(60, 60, 60);
-    const bd = company.bankDetails;
-    doc.text(`${bd.accountName || ''} · ${bd.bankName || ''} · A/C ${bd.accountNumber || ''} · IFSC ${bd.ifsc || ''}`, MARGIN, y);
-  }
+  // ---------- Footer card ----------
+  const footH = 78;
+  ensure(footH);
+  card(MARGIN, y, CW, footH);
+  // K31 circle
+  const cx = MARGIN + 40;
+  const cy = y + footH / 2;
+  doc.setDrawColor(...BORDER2);
+  doc.setLineWidth(1);
+  doc.circle(cx, cy, 22, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  setColor(WHITE);
+  doc.text('K31', cx, cy + 4, { align: 'center' });
+  // divider
+  doc.setDrawColor(...BORDER);
+  doc.line(MARGIN + 76, y + 16, MARGIN + 76, y + footH - 16);
+  // thank-you text
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  setColor(GRAY);
+  doc.splitTextToSize(co.footerText || 'Thank you for choosing Kode31. This quotation is generated digitally and does not require a signature.', CW - 300).slice(0, 3).forEach((l, i) => doc.text(l, MARGIN + 92, y + 30 + i * 13));
+  // signature
+  const sx = PAGE_W - MARGIN - 20;
+  doc.setDrawColor(...BORDER2);
+  doc.setLineWidth(0.8);
+  doc.lines([[10, -8], [10, 10], [10, -12], [10, 8]], sx - 84, y + 30, [1, 1], 'S');
+  doc.line(sx - 90, y + 42, sx, y + 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  setColor(WHITE);
+  doc.text(quote.createdBy?.name || co.name || 'Kode31', sx, y + 56, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  setColor(GRAY);
+  doc.text(co.name || 'Kode31', sx, y + 68, { align: 'right' });
 
-  // ---- Footer on every page ----
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= pageCount; p++) {
-    doc.setPage(p);
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.5);
-    doc.line(MARGIN, PAGE_H - 64, PAGE_W - MARGIN, PAGE_H - 64);
+  // GST / bank line (optional, below footer)
+  if (co.gstNumber || co.bankDetails?.accountNumber) {
+    y += footH + 14;
+    ensure(20);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    const footerLines = wrapText(doc, company.footerText || 'Thank you for choosing Kode31.', MARGIN, PAGE_H - 48, CONTENT_W);
-    footerLines.slice(0, 2).forEach((line, i) => doc.text(line, PAGE_W / 2, PAGE_H - 48 + i * 11, { align: 'center' }));
-    const contactLine = [company.address, company.phone, company.email, company.website].filter(Boolean).join('   ·   ');
-    if (contactLine) doc.text(contactLine, PAGE_W / 2, PAGE_H - 24, { align: 'center' });
+    setColor(FAINT);
+    const bd = co.bankDetails || {};
+    const bits = [];
+    if (co.gstNumber) bits.push(`GSTIN: ${co.gstNumber}`);
+    if (bd.accountNumber) bits.push(`${bd.bankName || ''} A/C ${bd.accountNumber} · IFSC ${bd.ifsc || ''}`);
+    doc.text(bits.join('     ·     '), MARGIN, y, { maxWidth: CW });
   }
 
   doc.save(`${quote.quoteNumber}.pdf`);
-
-  function totalRow(x, label, value) {
-    ensureSpace(18);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
-    doc.setTextColor(...GRAY);
-    doc.text(label, x, y);
-    doc.setTextColor(...INK);
-    doc.text(value, MARGIN + CONTENT_W, y, { align: 'right' });
-    y += 16;
-  }
-
-  function eyebrow(text, x, yy) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...GRAY);
-    doc.text(text, x, yy, { charSpace: 0.6 });
-  }
 }
 
-function formatINR(amount) {
+function money(amount) {
   return `Rs. ${Math.round(amount || 0).toLocaleString('en-IN')}`;
 }
 
 function formatDate(ts) {
   if (!ts) return '';
   return new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(ts));
-}
-
-function wrapText(doc, text, x, y, maxWidth) {
-  return doc.splitTextToSize(text, maxWidth);
-}
-
-function wrapChips(doc, chips, maxWidth) {
-  const text = chips.join('   •   ');
-  doc.setFontSize(8.5);
-  return doc.splitTextToSize(text, maxWidth);
 }
